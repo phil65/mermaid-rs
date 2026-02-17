@@ -32,11 +32,6 @@ Repository = "https://github.com/phil65/python-mermaid-rs"
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
 
-[dependency-groups]
-dev = [
-  "pytest>=8.0",
-]
-
 [build-system]
 requires = ["maturin>=1.0,<2.0"]
 build-backend = "maturin"
