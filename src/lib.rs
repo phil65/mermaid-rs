@@ -101,6 +101,16 @@ fn supported_diagram_types() -> Vec<&'static str> {
         "journey",
         "mindmap",
         "gitGraph",
+        "requirementDiagram",
+        "c4",
+        "sankey",
+        "zenuml",
+        "block",
+        "packet",
+        "kanban",
+        "architecture",
+        "radar",
+        "treemap",
     ]
 }
 

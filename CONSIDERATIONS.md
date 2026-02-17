@@ -184,3 +184,100 @@ pytest tests/ -v
 - **Maintenance**: Active (recent commits)
 - **Stability**: Version 0.1.2 - API may change
 - **Issue**: dagre_rust patching suggests upstream fixes not yet merged
+
+## Known Bugs and Behavior (as of 2026-01-29)
+
+The test suite documents current behavior with 62 tests (56 pass, 6 xfail for known panics).
+
+### Panics (PanicException from Rust)
+
+These issues cause Rust panics that propagate as `pyo3_runtime.PanicException` in Python.
+Note: `PanicException` inherits from `BaseException`, not `Exception`.
+
+#### 1. Edge Labels in Flowcharts (dagre_rust bug)
+**Location**: `dagre_rust-0.0.5/src/layout/mod.rs:390:61`
+**Trigger**: Using pipe syntax for edge labels (`-->|text|`)
+```
+# These all panic:
+flowchart LR; A-->|text|B
+flowchart TD; A-->|Yes|B
+flowchart LR; A-->|one|B-->|two|C
+```
+
+#### 2. State Diagram Transition Labels (dagre_rust bug)
+**Location**: `dagre_rust-0.0.5/src/layout/mod.rs:390:61`
+**Trigger**: Labeled state transitions
+```
+# This panics:
+stateDiagram-v2; A --> B: event
+
+# These work:
+stateDiagram-v2; [*] --> Active
+stateDiagram-v2; Active --> [*]
+```
+
+#### 3. Certain Unicode Characters (parser bug)
+**Location**: `mermaid-rs-renderer/src/parser.rs:5005:52`
+**Trigger**: Multi-byte Unicode where byte indexing fails
+```
+# These panic:
+flowchart LR; A[日本語]-->B[テスト]  # Japanese
+flowchart LR; A[🎉]-->B[🚀]          # Emoji
+
+# These work:
+flowchart LR; A[中文]-->B[测试]      # Chinese (different byte pattern)
+```
+
+### Lenient Parsing (No Errors Raised)
+
+The library is very lenient and rarely raises errors:
+
+| Input | Behavior |
+|-------|----------|
+| Empty string | Produces empty SVG (8x8 px) |
+| Whitespace only | Produces empty SVG |
+| Random text | Treated as node label |
+| Incomplete arrow (`A-->`) | Renders what it can |
+| Invalid syntax | Often produces SVG with partial parsing |
+
+### Security Consideration
+
+HTML tags in labels are **NOT escaped**:
+```python
+# This preserves the script tag in SVG output:
+render("flowchart LR; A[<script>alert(1)</script>]-->B")
+```
+**Warning**: Sanitize user input before rendering if displaying SVG in browsers.
+
+### Working Features (Verified)
+
+| Feature | Status |
+|---------|--------|
+| All flowchart directions (LR, RL, TD, TB, BT) | ✓ Works |
+| Node shapes (rect, round, diamond, hexagon, etc.) | ✓ Works |
+| Edge styles (arrow, open, dotted, thick, invisible) | ✓ Works |
+| Extended arrows (`--->`, `---->`) | ✓ Works |
+| Subgraphs | ✓ Works |
+| Cycles in flowcharts | ✓ Works |
+| Sequence diagrams | ✓ Works |
+| Class diagrams | ✓ Works |
+| State diagrams (without labeled transitions) | ✓ Works |
+| ER diagrams | ✓ Works |
+| Pie charts | ✓ Works |
+| Gantt charts | ✓ Works |
+| Timeline | ✓ Works |
+| Mindmap | ✓ Works |
+| Git graph | ✓ Works |
+| XY chart | ✓ Works |
+| Quadrant chart | ✓ Works |
+| Chinese Unicode | ✓ Works |
+| Comments (`%%`) | ✓ Works |
+| Very long labels | ✓ Works |
+| Many nodes (50+) | ✓ Works |
+
+### Test Strategy
+
+The test suite uses `@pytest.mark.xfail(raises=BaseException, strict=True)` for known panics:
+- Tests document current buggy behavior
+- `strict=True` means tests will **fail** if the bug is fixed upstream
+- This alerts you to update tests when upstream improves
