@@ -194,17 +194,10 @@ def test_extended_arrows(dashes):
 
 
 # =============================================================================
-# Known Panic Cases - Edge Labels
-# These tests document panics in dagre_rust that should be fixed upstream.
-# When upstream fixes these, the tests will start passing (xfail will fail).
+# Edge Labels
 # =============================================================================
 
 
-@pytest.mark.xfail(
-    reason="Edge labels cause panic in dagre_rust (dagre_rust-0.0.5/src/layout/mod.rs:390:61)",
-    raises=BaseException,  # PanicException inherits from BaseException, not Exception
-    strict=True,  # Fail if this unexpectedly passes (meaning upstream fixed it)
-)
 @pytest.mark.parametrize(
     "diagram,name",
     [
@@ -213,12 +206,8 @@ def test_extended_arrows(dashes):
         ("flowchart LR; A-->|one|B-->|two|C", "edge_label_multi"),
     ],
 )
-def test_edge_labels_known_panic(diagram, name):
-    """Edge labels cause panic in dagre_rust (known issue).
-
-    Bug location: dagre_rust-0.0.5/src/layout/mod.rs:390:61
-    When this test starts passing, the upstream bug has been fixed.
-    """
+def test_edge_labels(diagram, name):
+    """Edge labels render correctly."""
     import mermaid_rs
 
     svg = mermaid_rs.render(diagram)
@@ -226,20 +215,12 @@ def test_edge_labels_known_panic(diagram, name):
 
 
 # =============================================================================
-# Known Panic Cases - State Diagram Transitions
+# State Diagram Transitions
 # =============================================================================
 
 
-@pytest.mark.xfail(
-    reason="State transition labels cause panic in dagre_rust",
-    raises=BaseException,  # PanicException inherits from BaseException, not Exception
-    strict=True,
-)
-def test_state_transition_with_label_known_panic():
-    """State transition with label causes panic (known issue).
-
-    This documents a bug in dagre_rust with labeled state transitions.
-    """
+def test_state_transition_with_label():
+    """State transition with label renders correctly."""
     import mermaid_rs
 
     svg = mermaid_rs.render("stateDiagram-v2; A --> B: event")
@@ -256,15 +237,10 @@ def test_state_basic_works():
 
 
 # =============================================================================
-# Known Panic Cases - Unicode
+# Unicode
 # =============================================================================
 
 
-@pytest.mark.xfail(
-    reason="Parser incorrectly indexes multi-byte Unicode (parser.rs:5005:52)",
-    raises=BaseException,  # PanicException inherits from BaseException, not Exception
-    strict=True,
-)
 @pytest.mark.parametrize(
     "diagram,name",
     [
@@ -272,13 +248,8 @@ def test_state_basic_works():
         ("flowchart LR; A[🎉]-->B[🚀]", "emoji"),
     ],
 )
-def test_unicode_known_panic(diagram, name):
-    """Certain Unicode characters cause parser panic (known issue).
-
-    Bug location: mermaid-rs-renderer/src/parser.rs:5005:52
-    The parser incorrectly indexes into multi-byte Unicode characters.
-    When this test starts passing, the upstream bug has been fixed.
-    """
+def test_unicode(diagram, name):
+    """Unicode characters in diagrams render correctly."""
     import mermaid_rs
 
     svg = mermaid_rs.render(diagram)
